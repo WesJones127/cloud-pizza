@@ -1,8 +1,19 @@
 # AWS Step Functions sample project
 
-This project uses the AWS CDK to deploy a state machine that simulates an online pizza ordering process.  
+This project uses the AWS CDK to deploy a state machine that simulates an online pizza ordering process.  You will need to have the AWS CLI installed and configured to deploy it.
 
  <br /> 
+ 
+
+The State Machine takes advantage of several key Step Functions features.
+- Parallel states for asynchronous processing
+    - Unique exception handling for different branches within the parallel states
+        - failure to add loyalty points WILL NOT roll back an order
+        - failure to cook or deliver an order WILL start a rollback/refund
+- Wait states (simulated user actions of cooking and delivering the pizza)
+- Dead Letter Queues for persistence of failed tasks
+
+<br />
 
 ## To get started:
 * `npm install`     install dependencies
@@ -29,11 +40,22 @@ There are 2 API routes you can call:
 
 ```
 {
-    flavour?: string,               // the style of pizza you want, we recommend Pineapple
-    perStepDelaySeconds?: number,   // force a delay in each workflow stage, useful if you want to check on status changes
+    flavour?: string,               // the style of pizza you want, I recommend Pineapple
+    perStepDelaySeconds?: number,   // force a delay in each workflow stage, useful if you want to check on status changes as they occur
     errorOnStep?: number            // force the workflow to error at a specific stage so that you can test each error state
 }
 ```
+
+Here is a sample request body you can use for the POST route that will trigger all 8 possible worflow outcomes:
+```
+{
+    "flavour": "Pineapple",
+    "perStepDelaySeconds": 0,
+    "errorOnStep": 100
+}
+```
+
+
 
 Options for `errorOnStep`:
 ```
@@ -56,19 +78,12 @@ export enum ErrorSteps {
 
  <br /> 
  <br /> 
+The State Machine has 8 possible paths that can be taken, based on which step fails and which rollback steps get hit. In order to test all possible flows, we'll need to simulate errors at key stages. The POST route has an optional parameter you can supply to trigger an error at any of those stages. The following diagram shows the value you will need to supply in the `ErrorSteps` parameter for each stage. There is also an `ALL` option that will asynchronously trigger state machine executions for all 7 error stages as well as a succussful run with no errors.  *Note: an error at step: 3 will still result in the overall flow returning a success response.*
 
-In order to test all possible flows in the state machine, we'll need to simulate errors at key stages. The POST route has an optional parameter you can supply to trigger an error at any of those stages. The following diagram shows the value you will need to supply in the `ErrorSteps` parameter for each stage. There is also an `ALL` option that will asynchronously trigger state machine executions for all 7 error stages as well as a succussful run.
-
+ <br /> 
+ <br /> 
 <picture>
  <img alt="YOUR-ALT-TEXT" src="./StateMachine.jpg">
 </picture>
 
  <br />   
-
-This State Machine takes advantage of several key Step Functions features.
-- Parallel states for asynchronous processing
-    - Unique exception handling for different branches within the parallel states
-        - failure to add loyalty points WILL NOT roll back an order
-        - failure to cook or deliver an order WILL start a rollback/refund
-- Wait states (simulated user actions of cooking and delivering the pizza)
-- Dead Letter Queues for persistence of failed tasks

@@ -1,8 +1,8 @@
 {
-  "name": "tacticam",
+  "name": "tactacam",
   "version": "0.1.0",
   "bin": {
-    "tacticam": "bin/tacticam.js"
+    "tactacam": "bin/tactacam.js"
   },
   "scripts": {
     "build": "tsc",

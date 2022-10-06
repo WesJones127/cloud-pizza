@@ -8,14 +8,14 @@ import { PrePaymentFlow } from './constructs/pre-payment-workflow';
 import { PostPaymentFlow } from './constructs/post-payment-workflow';
 import { APIGateWay } from './constructs/api-gateway';
 
-export interface TacticamStackProps extends cdk.StackProps {
+export interface TactacamStackProps extends cdk.StackProps {
   STATUS_CHECK_URL_PARAM: string;
   STATUS_CHECK_URL_PARAM_NULL_VALUE: string;
   DYNAMO_DB_TABLE_NAME: string;
 }
 
-export class TacticamStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: TacticamStackProps) {
+export class TactacamStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: TactacamStackProps) {
     super(scope, id, props);
 
     // create a database to store orders

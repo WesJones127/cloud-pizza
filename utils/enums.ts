@@ -1,4 +1,4 @@
-export const enum OrderStatus {
+export enum OrderStatus {
     Pending = 1,
     PaymentProcessing = 2,
     PaymentComplete = 3,
