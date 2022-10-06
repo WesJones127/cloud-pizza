@@ -21,14 +21,12 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@utils/*": [
-        "./utils/*"
-      ]
-    }
+    ]
   },
+  "include": [
+    "**/*.ts",
+    "test/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "cdk.out"

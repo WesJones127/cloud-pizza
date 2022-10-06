@@ -11,7 +11,7 @@ export const enum OrderStatus {
     Cancelled = 10
 }
 
-export  enum errorSteps {
+export enum errorSteps {
     'none' = 0,
     'createOrder' = 1,
     'processPayment' = 2,

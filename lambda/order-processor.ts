@@ -1,4 +1,4 @@
-import { errorSteps } from 'utils/enums';
+import { errorSteps } from '../utils/enums';
 import * as AWS from 'aws-sdk';
 
 export async function handler(event: any): Promise<any> {

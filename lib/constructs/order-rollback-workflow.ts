@@ -2,8 +2,7 @@ import { Construct } from 'constructs';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
-import { createLambda, createLambdaWithDynamoAccess } from 'utils/cdk';
-import { lambdaMemorySizes } from 'utils/enums';
+import { createLambda } from '../../utils/cdk';
 import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 
 export interface OrderRollbackProps {
@@ -44,7 +43,7 @@ export class OrderRollback extends Construct {
             // inputPath: '$.Error'
         })
             .next(rollbackFail);
-        const paymentRefundProcessorLambda = createLambda(this, 'PaymentRefundProcessorLambda', 'payment-refund');
+        const paymentRefundProcessorLambda = createLambda(this, 'PaymentRefundProcessorLambda', 'payment-refund.handler');
         // simulated Error state: 6
         const paymentRefundInvocation = new tasks.LambdaInvoke(this, 'Refund Payment (6)', {
             lambdaFunction: paymentRefundProcessorLambda,
@@ -73,7 +72,7 @@ export class OrderRollback extends Construct {
             // inputPath: '$.Error'
         })
             .next(rollbackFail);
-        const loyaltyPointsRemovalLambda = createLambda(this, 'LoyaltyPointsRemoveLambda', 'loyalty-reclaim');
+        const loyaltyPointsRemovalLambda = createLambda(this, 'LoyaltyPointsRemoveLambda', 'loyalty-reclaim.handler');
         // simulated Error state: 7
         const loyaltyPointsRemovalInvocation = new tasks.LambdaInvoke(this, 'Remove Loyalty Points (7)', {
             lambdaFunction: loyaltyPointsRemovalLambda,
@@ -90,7 +89,7 @@ export class OrderRollback extends Construct {
 
 
         // Notify the customer that something went wrong with their order
-        const orderFailureNotificationLambda = createLambda(this, 'CustomerNotificationLambda', 'notify-customer');
+        const orderFailureNotificationLambda = createLambda(this, 'CustomerNotificationLambda', 'notify-customer.handler');
         const orderFailureNotificationInvocation = new tasks.LambdaInvoke(this, 'Notify Customer - Order Failed', {
             lambdaFunction: orderFailureNotificationLambda
         });

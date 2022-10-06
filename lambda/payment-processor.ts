@@ -1,5 +1,5 @@
-import { errorSteps, OrderStatus } from 'utils/enums';
-import { IOrdersService, OrdersService } from 'services/orders-service';
+import { errorSteps, OrderStatus } from '../utils/enums';
+import { IOrdersService, OrdersService } from '../services/orders-service';
 
 export async function handler(event: any): Promise<any> {
     if (event.errorOnStep == errorSteps.processPayment)

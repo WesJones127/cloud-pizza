@@ -1,12 +1,9 @@
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-//import { Runtime, Code } from 'aws-cdk-lib/aws-lambda';
 import { Duration } from 'aws-cdk-lib';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
-import { join } from 'path';
-import { Construct, IConstruct } from 'constructs';
+import { Construct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { lambdaMemorySizes } from '@utils/enums';
+import { lambdaMemorySizes } from '../../utils/enums';
 import { FunctionProps } from 'aws-cdk-lib/aws-lambda';
 
 export interface ILambdaWithDynamoProps extends FunctionProps {

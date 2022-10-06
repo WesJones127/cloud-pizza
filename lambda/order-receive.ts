@@ -2,8 +2,8 @@ import * as AWS from 'aws-sdk';
 import { StepFunctions } from 'aws-sdk';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { APIGatewayProxyEventV2, Context } from 'aws-lambda';
-import { getParameter } from 'utils/ssm.parameters';
-import { errorSteps } from 'utils/enums';
+import { getParameter } from '../utils/ssm-parameters';
+import { errorSteps } from '../utils/enums';
 
 type inputType = {
     flavour: string,

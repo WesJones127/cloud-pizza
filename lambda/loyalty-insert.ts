@@ -1,4 +1,4 @@
-import { errorSteps } from 'utils/enums';
+import { errorSteps } from '../utils/enums';
 
 export async function handler(event: any): Promise<any> {
     if (event.errorOnStep == errorSteps.addLoyaltyPoints)

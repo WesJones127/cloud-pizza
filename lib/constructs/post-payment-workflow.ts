@@ -2,12 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
-import { createLambda, createLambdaWithDynamoAccess } from '@utils/cdk';
-import { lambdaMemorySizes } from '../../utils/enums';
+import { createLambda, createLambdaWithDynamoAccess } from '../../utils/cdk';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 export interface PostPaymentFlowProps {
     dynamoTable: Table,
@@ -25,7 +25,7 @@ export interface PostPaymentFlowProps {
  * 
  */
 export class PostPaymentFlow extends Construct {
-    public readonly orderProcessorLambda: cdk.aws_lambda_nodejs.NodejsFunction;
+    public readonly orderProcessorLambda: lambda.Function;
     public readonly orderInsertInvocation: sfn.TaskStateBase;
     public readonly paymentProcessorInvocation: sfn.TaskStateBase;
     public readonly paymentSuccessParallel: sfn.Parallel;
@@ -48,7 +48,7 @@ export class PostPaymentFlow extends Construct {
 
         // simulated Error state: 3
         const loyaltyInsertInvocation = new tasks.LambdaInvoke(this, 'Add Loyalty Points To Customer Record (3)', {
-            lambdaFunction: createLambda(this, 'LoyaltyInsertLambda', 'loyalty-insert'),
+            lambdaFunction: createLambda(this, 'LoyaltyInsertLambda', 'loyalty-insert.handler'),
             inputPath: '$.Payload',
             outputPath: '$.Payload',
             resultPath: '$.Payload'
@@ -64,7 +64,7 @@ export class PostPaymentFlow extends Construct {
 
 
         // begin the order preparation process:
-        const orderBeginPrepLambda = createLambdaWithDynamoAccess(this, 'OrderPrepareLambda', 'order-prepare', props.dynamoTable);
+        const orderBeginPrepLambda = createLambdaWithDynamoAccess(this, 'OrderPrepareLambda', 'order-prepare.handler', props.dynamoTable);
         // simulated Error state: 4
         const orderBeginPrepInvocation = new tasks.LambdaInvoke(this, 'Begin Order Preparation (4)', {
             lambdaFunction: orderBeginPrepLambda,
@@ -81,7 +81,7 @@ export class PostPaymentFlow extends Construct {
         // but this demo is already getting long and splitting those steps out would not show additional functionality 
         // that is not already being utilized elsewhere 
         const ordersQueue = new sqs.Queue(this, 'sqsPrepareOrder');
-        this.orderProcessorLambda = createLambda(this, 'OrderProcessorLambda', 'order-processor');
+        this.orderProcessorLambda = createLambda(this, 'OrderProcessorLambda', 'order-processor.handler');
         this.orderProcessorLambda.addEventSource(new SqsEventSource(ordersQueue));
 
         // simulated Error state: 5

@@ -1,5 +1,5 @@
-import { OrderStatus, errorSteps } from 'utils/enums';
-import { IOrdersService, OrdersService } from 'services/orders-service';
+import { OrderStatus, errorSteps } from '../utils/enums';
+import { IOrdersService, OrdersService } from '../services/orders-service';
 
 export async function handler(event: any): Promise<any> {
     // if the requested error stage is in the "order rollback flow"

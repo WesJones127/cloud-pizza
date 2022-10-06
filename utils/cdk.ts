@@ -3,8 +3,7 @@ import { Duration } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { IConstruct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { lambdaMemorySizes } from 'utils/enums';
-import { LambdaWithDynamo } from 'lib/constructs/lambda-function-with-dynamo';
+import { lambdaMemorySizes } from './enums';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 
@@ -19,9 +18,8 @@ export function createLambda(scope: IConstruct, id: string, handler: string): la
     });
 }
 
-export function createLambdaWithDynamoAccess(scope: IConstruct, id: string, handler: string, table: Table): LambdaWithDynamo {
-    let fn = new LambdaWithDynamo(scope, id, {
-            dynamoDB: table,
+export function createLambdaWithDynamoAccess(scope: IConstruct, id: string, handler: string, table: Table): lambda.Function {
+    let fn = new lambda.Function(scope, id, {
             memorySize: lambdaMemorySizes.s,
             logRetention: RetentionDays.ONE_DAY,
             timeout: Duration.seconds(10),

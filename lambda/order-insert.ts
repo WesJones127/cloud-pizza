@@ -1,6 +1,6 @@
-import { delay } from 'utils/common';
-import { errorSteps, stepFuncInput } from 'utils/enums';
-import { IOrdersService, OrdersService } from 'services/orders-service';
+import { delay } from '../utils/common';
+import { errorSteps, stepFuncInput } from '../utils/enums';
+import { IOrdersService, OrdersService } from '../services/orders-service';
 
 export async function handler(event: stepFuncInput): Promise<any> {
     const TABLE_NAME = process.env.TABLE_NAME || 'orders';
