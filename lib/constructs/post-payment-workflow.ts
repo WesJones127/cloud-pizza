@@ -7,7 +7,8 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
+import { join } from 'path';
 
 export interface PostPaymentFlowProps {
     dynamoTable: Table,
@@ -25,7 +26,7 @@ export interface PostPaymentFlowProps {
  * 
  */
 export class PostPaymentFlow extends Construct {
-    public readonly orderProcessorLambda: lambda.Function;
+    public readonly orderProcessorLambda: lambda.NodejsFunction;
     public readonly orderInsertInvocation: sfn.TaskStateBase;
     public readonly paymentProcessorInvocation: sfn.TaskStateBase;
     public readonly paymentSuccessParallel: sfn.Parallel;
@@ -48,7 +49,7 @@ export class PostPaymentFlow extends Construct {
 
         // simulated Error state: 3
         const loyaltyInsertInvocation = new tasks.LambdaInvoke(this, 'Add Loyalty Points To Customer Record (3)', {
-            lambdaFunction: createLambda(this, 'LoyaltyInsertLambda', 'loyalty-insert.handler'),
+            lambdaFunction: createLambda(this, 'LoyaltyInsertLambda', join(__dirname, '../../lambda/loyalty-insert.ts')),
             inputPath: '$.Payload',
             outputPath: '$.Payload',
             resultPath: '$.Payload'
@@ -64,7 +65,7 @@ export class PostPaymentFlow extends Construct {
 
 
         // begin the order preparation process:
-        const orderBeginPrepLambda = createLambdaWithDynamoAccess(this, 'OrderPrepareLambda', 'order-prepare.handler', props.dynamoTable);
+        const orderBeginPrepLambda = createLambdaWithDynamoAccess(this, 'OrderPrepareLambda', join(__dirname, '../../lambda/order-prepare.ts'), props.dynamoTable);
         // simulated Error state: 4
         const orderBeginPrepInvocation = new tasks.LambdaInvoke(this, 'Begin Order Preparation (4)', {
             lambdaFunction: orderBeginPrepLambda,
@@ -81,7 +82,7 @@ export class PostPaymentFlow extends Construct {
         // but this demo is already getting long and splitting those steps out would not show additional functionality 
         // that is not already being utilized elsewhere 
         const ordersQueue = new sqs.Queue(this, 'sqsPrepareOrder');
-        this.orderProcessorLambda = createLambda(this, 'OrderProcessorLambda', 'order-processor.handler');
+        this.orderProcessorLambda = createLambda(this, 'OrderProcessorLambda', join(__dirname, '../../lambda/order-processor.ts'));
         this.orderProcessorLambda.addEventSource(new SqsEventSource(ordersQueue));
 
         // simulated Error state: 5

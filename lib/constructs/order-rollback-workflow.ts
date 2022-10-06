@@ -4,6 +4,7 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { createLambda } from '../../utils/cdk';
 import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
+import { join } from 'path';
 
 export interface OrderRollbackProps {
     workflowFailed: sfn.Fail,
@@ -43,7 +44,7 @@ export class OrderRollback extends Construct {
             // inputPath: '$.Error'
         })
             .next(rollbackFail);
-        const paymentRefundProcessorLambda = createLambda(this, 'PaymentRefundProcessorLambda', 'payment-refund.handler');
+        const paymentRefundProcessorLambda = createLambda(this, 'PaymentRefundProcessorLambda', join(__dirname, '../../lambda/payment-refund.ts'));
         // simulated Error state: 6
         const paymentRefundInvocation = new tasks.LambdaInvoke(this, 'Refund Payment (6)', {
             lambdaFunction: paymentRefundProcessorLambda,
@@ -72,7 +73,7 @@ export class OrderRollback extends Construct {
             // inputPath: '$.Error'
         })
             .next(rollbackFail);
-        const loyaltyPointsRemovalLambda = createLambda(this, 'LoyaltyPointsRemoveLambda', 'loyalty-reclaim.handler');
+        const loyaltyPointsRemovalLambda = createLambda(this, 'LoyaltyPointsRemoveLambda', join(__dirname, '../../lambda/loyalty-reclaim.ts'));
         // simulated Error state: 7
         const loyaltyPointsRemovalInvocation = new tasks.LambdaInvoke(this, 'Remove Loyalty Points (7)', {
             lambdaFunction: loyaltyPointsRemovalLambda,
@@ -89,7 +90,7 @@ export class OrderRollback extends Construct {
 
 
         // Notify the customer that something went wrong with their order
-        const orderFailureNotificationLambda = createLambda(this, 'CustomerNotificationLambda', 'notify-customer.handler');
+        const orderFailureNotificationLambda = createLambda(this, 'CustomerNotificationLambda', join(__dirname, '../../lambda/notify-customer.ts'));
         const orderFailureNotificationInvocation = new tasks.LambdaInvoke(this, 'Notify Customer - Order Failed', {
             lambdaFunction: orderFailureNotificationLambda
         });

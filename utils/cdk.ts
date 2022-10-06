@@ -4,32 +4,42 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { IConstruct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { lambdaMemorySizes } from './enums';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 
 
-export function createLambda(scope: IConstruct, id: string, handler: string): lambda.Function {
-    return new lambda.Function(scope, id, {
-        code: lambda.Code.fromAsset('lambda'),
-        handler: handler,
+export function createLambda(scope: IConstruct, id: string, entry: string): lambda.NodejsFunction {
+    return new lambda.NodejsFunction(scope, id, {
+        entry: entry,
+        handler: 'handler',
         runtime: Runtime.NODEJS_16_X,
         memorySize: lambdaMemorySizes.s,
         timeout: Duration.seconds(10),
-        logRetention: RetentionDays.ONE_DAY
+        logRetention: RetentionDays.ONE_DAY,
+        bundling: {
+            minify: true,
+            sourceMap: true,
+            sourceMapMode: lambda.SourceMapMode.INLINE,
+            sourcesContent: false,
+            target: 'es2020',
+            keepNames: true,
+            metafile: true
+        }
     });
 }
 
-export function createLambdaWithDynamoAccess(scope: IConstruct, id: string, handler: string, table: Table): lambda.Function {
-    let fn = new lambda.Function(scope, id, {
-            memorySize: lambdaMemorySizes.s,
-            logRetention: RetentionDays.ONE_DAY,
-            timeout: Duration.seconds(10),
-            handler: handler,
-            runtime: lambda.Runtime.NODEJS_16_X,
-            code: lambda.Code.fromAsset('lambda'),
-            environment: {
-                TABLE_NAME: table.tableName
-            }
-        }); 
+export function createLambdaWithDynamoAccess(scope: IConstruct, id: string, entry: string, table: Table): lambda.NodejsFunction {
+    let fn = new lambda.NodejsFunction(scope, id, {
+        entry: entry,
+        handler: 'handler',
+        memorySize: lambdaMemorySizes.s,
+        logRetention: RetentionDays.ONE_DAY,
+        timeout: Duration.seconds(10),
+        runtime: Runtime.NODEJS_16_X,
+        environment: {
+            TABLE_NAME: table.tableName
+        }
+    });
     table.grantReadWriteData(fn);
 
     return fn;

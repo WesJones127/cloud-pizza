@@ -3,6 +3,7 @@ import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { createLambdaWithDynamoAccess } from '../../utils/cdk';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
+import { join } from 'path';
 
 export interface PrePaymentFlowProps {
     dynamoTable: Table,
@@ -25,10 +26,9 @@ export class PrePaymentFlow extends Construct {
     constructor(scope: Construct, id: string, props: PrePaymentFlowProps) {
         super(scope, id);
 
-
         // order creation lambda,  adds new order records to the database
         // simulated Error state: 1
-        const orderInsertLambda = createLambdaWithDynamoAccess(this, 'OrderInsertLambda', 'order-insert.handler', props.dynamoTable);
+        const orderInsertLambda = createLambdaWithDynamoAccess(this, 'OrderInsertLambda', join(__dirname, '../../lambda/order-insert.ts'), props.dynamoTable);
         this.orderInsertInvocation = new tasks.LambdaInvoke(this, 'Create New Order (1)', {
             lambdaFunction: orderInsertLambda
         })
@@ -38,7 +38,7 @@ export class PrePaymentFlow extends Construct {
 
         // payment processor lambda
         // simulated Error state: 2
-        const paymentProcessorLambda = createLambdaWithDynamoAccess(this, 'PaymentProcessorLambda', 'payment-processor.handler', props.dynamoTable);
+        const paymentProcessorLambda = createLambdaWithDynamoAccess(this, 'PaymentProcessorLambda', join(__dirname, '../../lambda/payment-processor.ts'), props.dynamoTable);
         this.paymentProcessorInvocation = new tasks.LambdaInvoke(this, 'Process Payment (2)', {
             lambdaFunction: paymentProcessorLambda,
             inputPath: '$.Payload',

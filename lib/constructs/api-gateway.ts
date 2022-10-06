@@ -2,12 +2,13 @@ import * as cdk from 'aws-cdk-lib';
 import * as SSM from 'aws-cdk-lib/aws-ssm';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
+import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import { StateMachine } from 'aws-cdk-lib/aws-stepfunctions';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { createLambda, createLambdaWithDynamoAccess } from '../../utils/cdk';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { join } from 'path';
 
 
 export interface APIGateWayProps {
@@ -26,7 +27,7 @@ export interface APIGateWayProps {
  * This will allow us to generate a clickable URL that we can return in the response of the POST route to allow the user to check the status of their order
  */
 export class APIGateWay extends Construct {
-    public readonly orderProcessorLambda: lambda.Function;
+    public readonly orderProcessorLambda: lambda.NodejsFunction;
     public readonly orderInsertInvocation: sfn.TaskStateBase;
     public readonly paymentProcessorInvocation: sfn.TaskStateBase;
     public readonly paymentSuccessParallel: sfn.Parallel;
@@ -36,14 +37,14 @@ export class APIGateWay extends Construct {
 
         // order received lambda
         // triggered by the API gateway, will kick off the step function process
-        let orderReceivedLambda = createLambdaWithDynamoAccess(this, 'OrderReceivedLambda', 'order-receive.handler', props.dynamoTable);
+        let orderReceivedLambda = createLambdaWithDynamoAccess(this, 'OrderReceivedLambda', join(__dirname, '../../lambda/order-receive.ts'), props.dynamoTable);
         orderReceivedLambda.addEnvironment('STATUS_CHECK_URL_PARAM', props.STATUS_CHECK_URL_PARAM);
         orderReceivedLambda.addEnvironment('STATE_MACHINE_ARN', props.stateMachine.stateMachineArn);
         props.stateMachine.grantStartExecution(orderReceivedLambda);
 
 
         // order status check lambda
-        let orderGetLambda = createLambdaWithDynamoAccess(this, 'OrderGetLambda', 'order-get.handler', props.dynamoTable);
+        let orderGetLambda = createLambdaWithDynamoAccess(this, 'OrderGetLambda', join(__dirname, '../../lambda/order-get.ts'), props.dynamoTable);
 
 
         // create an API Gateway
@@ -59,7 +60,7 @@ export class APIGateWay extends Construct {
         // we want the API gateway route that kicks off the order process to return a URL that can be used to check the status of an order
         // in order to do that we need to get the auto-generated domain name for the APIG, but that's not available until the deployment is done
         // we'll trigger a custom resource that calls a lambda function to add the URL to a Parameter Store value in the Systems Manager
-        let apiUrlSetterLambda = createLambda(this, 'ApiUrlSetterLambda', 'api-url-setter.handler');
+        let apiUrlSetterLambda = createLambda(this, 'ApiUrlSetterLambda', join(__dirname, '../../lambda/api-url-setter.ts'));
         apiUrlSetterLambda.addEnvironment('STATUS_CHECK_URL_PARAM', props.STATUS_CHECK_URL_PARAM);
         apiUrlSetterLambda.addEnvironment('STATUS_CHECK_URL_PARAM_NULL_VALUE', props.STATUS_CHECK_URL_PARAM_NULL_VALUE);
 
