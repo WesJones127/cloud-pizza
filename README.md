@@ -67,5 +67,7 @@ In order to test all possible flows in the state machine, we'll need to simulate
 This State Machine takes advantage of several key Step Functions features.
 - Parallel states for asynchronous processing
     - Unique exception handling for different branches within the parallel states
+        - failure to add loyalty points WILL NOT roll back an order
+        - failure to cook or deliver an order WILL start a rollback/refund
 - Wait states (simulated user actions of cooking and delivering the pizza)
 - Dead Letter Queues for persistence of failed tasks

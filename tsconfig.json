@@ -19,6 +19,7 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
+    "moduleResolution": "node",
     "typeRoots": [
       "./node_modules/@types"
     ],
@@ -26,7 +27,8 @@
   },
   "include": [
     "**/*.ts",
-    "test/**/*.ts"
+    "test/**/*.test.ts",
+    "jest.config.js"
   ],
   "exclude": [
     "node_modules",
