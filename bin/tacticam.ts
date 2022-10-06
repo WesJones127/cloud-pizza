@@ -5,7 +5,6 @@ import { Tags } from 'aws-cdk-lib';
 import { TacticamStack, TacticamStackProps } from '../lib/tacticam-stack';
 
 const app = new cdk.App();
-//new cdk.Stack(app, 'test');
 
 const tacticamStackProps: TacticamStackProps = {
     DYNAMO_DB_TABLE_NAME: 'orders',

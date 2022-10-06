@@ -5,7 +5,6 @@ import { IConstruct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { LambdaMemorySizes } from './enums';
 import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 
 
 export function createLambda(scope: IConstruct, id: string, entry: string): lambda.NodejsFunction {

@@ -75,14 +75,14 @@ export class APIGateWay extends Construct {
         paramStore.grantWrite(apiUrlSetterLambda);
 
         // use a custom resource to call a lambda function that will set the correct API URL in the Parameter Store
-        // const provider = new cr.Provider(this, 'crProvider', {
-        //     onEventHandler: apiUrlSetterLambda
-        // });
-        // new cdk.CustomResource(this, 'RegisterApi', {
-        //     serviceToken: provider.serviceToken,
-        //     properties: {
-        //         apiUrl: api.url
-        //     }
-        // });
+        const provider = new cr.Provider(this, 'crProvider', {
+            onEventHandler: apiUrlSetterLambda
+        });
+        new cdk.CustomResource(this, 'RegisterApi', {
+            serviceToken: provider.serviceToken,
+            properties: {
+                apiUrl: api.url
+            }
+        });
     }
 }

@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk';
 import { StepFunctions } from 'aws-sdk';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { APIGatewayProxyEventV2, Context } from 'aws-lambda';
+import { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { getParameter } from '../utils/ssm-parameters';
 import { ErrorSteps } from '../utils/enums';
 
@@ -12,19 +12,21 @@ type inputType = {
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
-    const input = validateInput(event);
+    const input = validateAndParseInput(event);
     const newOrderId = generateNewOrderId();
     const STATUS_CHECK_URL_PARAM = process.env.STATUS_CHECK_URL_PARAM || '';
     const STATE_MACHINE_ARN = process.env.STATE_MACHINE_ARN || '';
 
 
     try {
+        // begin the state machine workflow
         await startStateMachineExecutions(newOrderId, input);
 
+        // generate a clickable URL for the user to check the status of their order
         let statusCheckUrl = await generateStatusCheckURL(newOrderId, event, STATUS_CHECK_URL_PARAM);
 
+        // create the appropriate response based on whether we were able to generate a valid URL or not
         let response = generateResponseBody(statusCheckUrl);
-        console.log(response);
 
         return { statusCode: 201, body: JSON.stringify(response) };
 
@@ -33,7 +35,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
         return { statusCode: 500, body: 'Your order could not be placed' };
     }
 
-    function validateInput(event: APIGatewayProxyEventV2): inputType {
+    function validateAndParseInput(event: APIGatewayProxyEventV2): inputType {
         var data = JSON.parse(event.body ?? '');
 
         if (!!data === false) {
@@ -44,7 +46,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
             }
         }
         return {
-            flavour: data.flavor ?? 'plain',
+            flavour: data.flavour ?? 'plain',
             perStepDelaySeconds: data.perStepDelaySeconds ?? 0,
             errorOnStep: data.errorOnStep ?? 0
         }
@@ -58,6 +60,16 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
         return Date.now();
     }
 
+    /**
+     * First checks the Parameter Store to see if the base url for the API gateway was stored there
+     * If not, grab the URL from the request context
+     * If the AWS portal was used to make the API call, the URL in the request context will not be valid
+     * 
+     * @param orderId 
+     * @param event 
+     * @param paramName 
+     * @returns 
+     */
     async function generateStatusCheckURL(orderId: number, event: any, paramName: string): Promise<string> {
         // try to get the URL of the APIG from the AWS parameter store
         const urlBase = await getParameter(paramName);
@@ -109,18 +121,24 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
 
     async function startStateMachineExecutions(orderId: number, props: inputType) {
         const stepFunctions = new AWS.StepFunctions({
-            region: 'us-east-1'
+            region: process.env.AWS_REGION
         });
 
+        // if we're running every error scenario at once (ErrorStep = 100)
+        // then we'll run them all in parallel asynchronously
         var promises: Promise<PromiseResult<StepFunctions.StartExecutionOutput, AWS.AWSError>>[] = [];
 
         if (props.errorOnStep == ErrorSteps.ALL) {
             // start a new state machine execution for each possible error state (excluding ErrorSteps: ALL)
+            let userCount = 0;
             for (var err in ErrorSteps) {
                 if (!isNaN(Number(err)) && Number(err) != ErrorSteps.ALL) {
                     console.log(`adding error state: ${Number(err)}`);
-                    promises.push(getExecutionPromise(orderId, props, Number(err)));
-
+                    // if we're going to automatically generate more than 1 order, we'll need a new order ID for each one
+                    // we'll use the original orderId for the first one since it will get returned in the API response
+                    let currentOrderId = (userCount === 0) ? orderId : generateNewOrderId();
+                    userCount++;
+                    promises.push(getExecutionPromise(currentOrderId, props, Number(err)));
                 }
             }
         } else {
@@ -129,7 +147,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
             promises = [getExecutionPromise(orderId, props, props.errorOnStep)];
         }
 
-        console.log(`promises count: ${promises.length}`);
+        // using Promise.all instead of Promise.allSettled so we'll throw an error if any of them fail
         return await Promise.all(promises);
 
         function getExecutionPromise(orderId: number, props: inputType, errorStep: number): Promise<PromiseResult<StepFunctions.StartExecutionOutput, AWS.AWSError>> {
@@ -145,6 +163,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
                 input: JSON.stringify(StepFuncInput)
             };
 
+            // don't await it yet
             return stepFunctions.startExecution(params).promise();
         }
     }

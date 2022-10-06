@@ -14,9 +14,19 @@ export const handler = async (event: any): Promise<any> => {
   const db = new AWS.DynamoDB.DocumentClient();
 
   try {
-    let result = await db.get(params).promise();
+    let result = await db.get(params).promise()
+        .then(data => {
+            let discount = '0%';
+            if (data.Item?.discountApplied > 0)
+                discount = `${data.Item?.discountApplied * 100}%`;
+            return {
+                ...data.Item,
+                discountApplied: discount
+            };
+        });
 
-    return { statusCode: 200, body: JSON.stringify(result) };        
+    return { statusCode: 200, body: JSON.stringify(result) };
+
   } catch (dbError) {
     console.log(dbError);
     return { statusCode: 500 };

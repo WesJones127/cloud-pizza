@@ -8,6 +8,7 @@ This project uses the AWS CDK to deploy a state machine that simulates an online
 * `npm install`     install dependencies
 * `npm run build`   compile typescript to js
 * `npm run test`    perform the jest unit tests
+* `cdk bootstrap`   provision the CloudFormation stack
 * `cdk synth`       emits the synthesized CloudFormation template
 * `cdk deploy`      deploy this stack to your default AWS account/region
 

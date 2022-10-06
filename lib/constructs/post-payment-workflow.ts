@@ -1,13 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
+import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Construct } from 'constructs';
 import { createLambda, createLambdaWithDynamoAccess } from '../../utils/cdk';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
-import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import { join } from 'path';
 import { Duration } from 'aws-cdk-lib';
 
@@ -21,7 +21,7 @@ export interface PostPaymentFlowProps {
  * 
  * POST-PAYMENT FLOW
  *  
- * This is an example of a parallel flow, we can make the food and award loyalty points to the customer asynchronously.
+ * This is an example of a parallel flow, we can prepare the food and award loyalty points to the customer asynchronously.
  * If the food CAN'T be made, we move to a rollback scenario where we refund the payment and reclaim the loyalty points (if they were added successfully).
  * If the food CAN be made, but adding loyalty points fails, we let the order continue and we put a message in a DLQ so the loyalty points issue can be recitified later.
  * 
@@ -44,8 +44,6 @@ export class PostPaymentFlow extends Construct {
                 messageType: 'AddLoyaltyPointsFailed',
                 payload: JsonPath.stringAt('$.Payload')
             })
-            // ,
-            // inputPath: '$.Error'
         });
 
         // simulated Error state: 3
@@ -80,8 +78,7 @@ export class PostPaymentFlow extends Construct {
         // process will timeout if callback not received promptly, allowing us to initiate a rollback
 
         // NOTE: I wanted to split the order processor into multiple stages (roll dough, apply toppings, cook pizza, out for delivery, etc)
-        // but this demo is already getting long and splitting those steps out would not show additional functionality 
-        // that is not already being utilized elsewhere 
+        // but this demo is already getting long and splitting those steps out would not show additional functionality that's not already being utilized elsewhere 
         const ordersQueue = new sqs.Queue(this, 'PrepareOrderQueue', {
             visibilityTimeout: Duration.seconds(10),
             retentionPeriod: Duration.seconds(60)

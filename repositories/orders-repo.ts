@@ -4,7 +4,7 @@ import { OrderStatus } from '../utils/enums';
 
 export interface IOrdersRepo {
     readonly TABLE_NAME: string;
-    readonly db: AWS.DynamoDB.DocumentClient;
+    readonly DB: AWS.DynamoDB.DocumentClient;
     updateStatus(orderId: number, status: OrderStatus): Promise<PromiseResult<AWS.DynamoDB.DocumentClient.UpdateItemOutput, AWS.AWSError>>;
     createOrder(flavour: string, orderId: number, discount: OrderDiscount): Promise<PromiseResult<AWS.DynamoDB.DocumentClient.PutItemOutput, AWS.AWSError>>;
 }
@@ -16,11 +16,11 @@ export type OrderDiscount = {
 
 export class OrdersRepo implements IOrdersRepo {
     readonly TABLE_NAME: string;
-    readonly db: AWS.DynamoDB.DocumentClient;
+    readonly DB: AWS.DynamoDB.DocumentClient;
 
     constructor(table_name: string) {
         this.TABLE_NAME = table_name;
-        this.db = new AWS.DynamoDB.DocumentClient({
+        this.DB = new AWS.DynamoDB.DocumentClient({
             httpOptions: {
                 connectTimeout: 5000,
                 timeout: 5000
@@ -40,7 +40,7 @@ export class OrdersRepo implements IOrdersRepo {
             }
         };
 
-        return await this.db.put(params).promise();
+        return await this.DB.put(params).promise();
     }
 
     public async updateStatus(orderId: number, status: OrderStatus): Promise<PromiseResult<AWS.DynamoDB.DocumentClient.UpdateItemOutput, AWS.AWSError>> {
@@ -54,6 +54,6 @@ export class OrdersRepo implements IOrdersRepo {
             }
         };
 
-        return this.db.update(params).promise();
+        return this.DB.update(params).promise();
     }
 }

@@ -1,8 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
+import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import { Construct } from 'constructs';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import { OrderRollback } from './constructs/order-rollback-workflow';
 import { PrePaymentFlow } from './constructs/pre-payment-workflow';
 import { PostPaymentFlow } from './constructs/post-payment-workflow';
@@ -24,6 +24,7 @@ export class TacticamStack extends cdk.Stack {
         name: 'orderId',
         type: AttributeType.NUMBER
       },
+      tableName: props.DYNAMO_DB_TABLE_NAME,
       removalPolicy: RemovalPolicy.DESTROY  // clean everything up since this is a test
     });
 
@@ -60,6 +61,7 @@ export class TacticamStack extends cdk.Stack {
       .next(prePaymentFlow.paymentProcessorInvocation)
       .next(postPaymentFlow.paymentSuccessParallel)
       .next(workflowSucceeded);
+      
     // create the step functions state machine
     let stateMachine = new sfn.StateMachine(this, 'OrderProcessingSaga', {
       definition,

@@ -40,8 +40,6 @@ export class OrderRollback extends Construct {
                 messageType: 'RefundPaymentFailed',
                 payload: JsonPath.stringAt('$.Payload')
             })
-            // ,
-            // inputPath: '$.Error'
         })
             .next(rollbackFail);
         const paymentRefundProcessorLambda = createLambda(this, 'PaymentRefundProcessorLambda', join(__dirname, '../../lambda/payment-refund.ts'));
@@ -69,8 +67,6 @@ export class OrderRollback extends Construct {
                 messageType: 'RemoveLoyaltyPointsFailed',
                 payload: JsonPath.stringAt('$.Payload')
             })
-            // ,
-            // inputPath: '$.Error'
         })
             .next(rollbackFail);
         const loyaltyPointsRemovalLambda = createLambda(this, 'LoyaltyPointsRemoveLambda', join(__dirname, '../../lambda/loyalty-reclaim.ts'));
