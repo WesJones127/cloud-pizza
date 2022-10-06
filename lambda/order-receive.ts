@@ -3,12 +3,12 @@ import { StepFunctions } from 'aws-sdk';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { APIGatewayProxyEventV2, Context } from 'aws-lambda';
 import { getParameter } from '../utils/ssm-parameters';
-import { errorSteps } from '../utils/enums';
+import { ErrorSteps } from '../utils/enums';
 
 type inputType = {
     flavour: string,
     perStepDelaySeconds: number,
-    errorOnStep: errorSteps
+    errorOnStep: ErrorSteps
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
@@ -114,10 +114,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
 
         var promises: Promise<PromiseResult<StepFunctions.StartExecutionOutput, AWS.AWSError>>[] = [];
 
-        if (props.errorOnStep == errorSteps.ALL) {
-            // start a new state machine execution for each possible error state (excluding errorSteps: ALL)
-            for (var err in errorSteps) {
-                if (!isNaN(Number(err))) {
+        if (props.errorOnStep == ErrorSteps.ALL) {
+            // start a new state machine execution for each possible error state (excluding ErrorSteps: ALL)
+            for (var err in ErrorSteps) {
+                if (!isNaN(Number(err)) && Number(err) != ErrorSteps.ALL) {
                     console.log(`adding error state: ${Number(err)}`);
                     promises.push(getExecutionPromise(orderId, props, Number(err)));
 
@@ -133,7 +133,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
         return await Promise.all(promises);
 
         function getExecutionPromise(orderId: number, props: inputType, errorStep: number): Promise<PromiseResult<StepFunctions.StartExecutionOutput, AWS.AWSError>> {
-            const stepFuncInput = {
+            const StepFuncInput = {
                 orderId: orderId,
                 flavor: props.flavour,
                 perStepDelaySeconds: props.perStepDelaySeconds,
@@ -142,7 +142,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
 
             const params: StepFunctions.StartExecutionInput = {
                 stateMachineArn: STATE_MACHINE_ARN,
-                input: JSON.stringify(stepFuncInput)
+                input: JSON.stringify(StepFuncInput)
             };
 
             return stepFunctions.startExecution(params).promise();

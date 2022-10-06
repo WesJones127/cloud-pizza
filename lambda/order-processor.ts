@@ -1,12 +1,19 @@
-import { errorSteps } from '../utils/enums';
 import * as AWS from 'aws-sdk';
+import { OrderStatus, ErrorSteps } from '../utils/enums';
+import { IOrdersService, OrdersService } from '../services/orders-service';
 
 export async function handler(event: any): Promise<any> {
+    const TABLE_NAME = process.env.TABLE_NAME || '';
+    const ordersService: IOrdersService = new OrdersService(TABLE_NAME);  
+
     for (const record of event.Records) {
         const messageBody = JSON.parse(record.body);
-        if (messageBody.payload.errorOnStep == errorSteps.processOrder)
-            throw new Error(`Simulating an exception in step: ${errorSteps.processOrder}`);
+        if (messageBody.payload.errorOnStep == ErrorSteps.processOrder)
+            throw new Error(`Simulating an exception in step: ${ErrorSteps.processOrder}`);
 
+            
+            await ordersService.updateStatus(event.orderId, OrderStatus.DeliveryConfirmed, TABLE_NAME, event.perStepDelaySeconds);
+            
         const taskToken = messageBody.taskToken;
         const params = {
             output: "\"Callback task completed successfully.\"",
@@ -15,10 +22,11 @@ export async function handler(event: any): Promise<any> {
         const stepfunctions = new AWS.StepFunctions();
         
         await stepfunctions.sendTaskSuccess(params).promise()
-            .then(data => {
+            .then(async data => {
                 console.log(data);
             }).catch(err => {
                 console.error(err.message);
             });
+            
     }
 }

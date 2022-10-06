@@ -7,11 +7,10 @@ export const enum OrderStatus {
     DeliveryStarted = 6,
     DeliveryConfirmed = 7,
     PaymentFailed = 8,
-    Unknown = 9,
-    Cancelled = 10
+    Cancelled = 9
 }
 
-export enum errorSteps {
+export enum ErrorSteps {
     'none' = 0,
     'createOrder' = 1,
     'processPayment' = 2,
@@ -23,14 +22,14 @@ export enum errorSteps {
     'ALL' = 100
 }
 
-export enum lambdaMemorySizes {
+export enum LambdaMemorySizes {
     's' = 128,
     'm' = 256,
     'l' = 512,
     'xl' = 1024
 }
 
-export type stepFuncInput = {
+export type StepFuncInput = {
     orderId: number,
     flavor: string,
     perStepDelaySeconds: number,
