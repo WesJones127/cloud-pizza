@@ -33,7 +33,7 @@ export class OrderRollback extends Construct {
 
 
         // first step in the rollback process is to issue a payment refund
-        const refundPaymentDLQ = new sqs.Queue(this, 'sqsRefundPayment');
+        const refundPaymentDLQ = new sqs.Queue(this, 'RefundPaymentDLQ');
         const refundPaymentDLQSendMessage = new tasks.SqsSendMessage(this, 'Refund Payment DLQ', {
             queue: refundPaymentDLQ,
             messageBody: sfn.TaskInput.fromObject({
@@ -62,7 +62,7 @@ export class OrderRollback extends Construct {
 
 
         // if the payment refund succeeded, the next step is to remove any loyalty points that had been applied
-        const removeLoyaltyPointsDLQ = new sqs.Queue(this, 'sqsRemoveLoyaltyPoints');
+        const removeLoyaltyPointsDLQ = new sqs.Queue(this, 'RemoveLoyaltyPointsDLQ');
         const removeLoyaltyPointsDLQSendMessage = new tasks.SqsSendMessage(this, 'Remove Loyalty Points DLQ', {
             queue: removeLoyaltyPointsDLQ,
             messageBody: sfn.TaskInput.fromObject({

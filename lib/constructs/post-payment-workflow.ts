@@ -9,6 +9,7 @@ import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import { join } from 'path';
+import { Duration } from 'aws-cdk-lib';
 
 export interface PostPaymentFlowProps {
     dynamoTable: Table,
@@ -36,7 +37,7 @@ export class PostPaymentFlow extends Construct {
 
 
         // loyalty points processes:
-        const addLoyaltyPointsDLQ = new sqs.Queue(this, 'sqsAddLoyaltyPoints');
+        const addLoyaltyPointsDLQ = new sqs.Queue(this, 'AddLoyaltyPointsDLQ');
         const addLoyaltyPointsDLQSendMessage = new tasks.SqsSendMessage(this, 'Add Loyalty Points DLQ', {
             queue: addLoyaltyPointsDLQ,
             messageBody: sfn.TaskInput.fromObject({
@@ -81,8 +82,11 @@ export class PostPaymentFlow extends Construct {
         // NOTE: I wanted to split the order processor into multiple stages (roll dough, apply toppings, cook pizza, out for delivery, etc)
         // but this demo is already getting long and splitting those steps out would not show additional functionality 
         // that is not already being utilized elsewhere 
-        const ordersQueue = new sqs.Queue(this, 'sqsPrepareOrder');
-        this.orderProcessorLambda = createLambda(this, 'OrderProcessorLambda', join(__dirname, '../../lambda/order-processor.ts'));
+        const ordersQueue = new sqs.Queue(this, 'PrepareOrderQueue', {
+            visibilityTimeout: Duration.seconds(10),
+            retentionPeriod: Duration.seconds(60)
+        });
+        this.orderProcessorLambda = createLambdaWithDynamoAccess(this, 'OrderProcessorLambda', join(__dirname, '../../lambda/order-processor.ts'), props.dynamoTable);
         this.orderProcessorLambda.addEventSource(new SqsEventSource(ordersQueue));
 
         // simulated Error state: 5
