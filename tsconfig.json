@@ -21,7 +21,13 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@utils/*": [
+        "./utils/*"
+      ]
+    }
   },
   "exclude": [
     "node_modules",
