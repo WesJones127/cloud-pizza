@@ -36,7 +36,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<any> {
     }
 
     function validateAndParseInput(event: APIGatewayProxyEventV2): inputType {
-        var data = JSON.parse(event.body ?? '');
+        
+        var data = (!!event.body) ? JSON.parse(event.body ?? '') : '';
 
         if (!!data === false) {
             return {
